@@ -4,3 +4,9 @@
 /.buildpath
 /phpunit.xml
 *~
+
+#IDE: netbeans
+/nbproject
+
+#IDE: PHPStorm
+.idea/

@@ -2,8 +2,9 @@
 
 namespace luya\posts\models;
 
+use luya\Exception;
 use Yii;
-use luya\helpers\{Inflector,Json,Url};
+use luya\helpers\{Html, Inflector, Json, Url};
 use luya\admin\helpers\I18n;
 use luya\admin\aws\TaggableActiveWindow;
 use luya\admin\ngrest\base\NgRestModel;
@@ -20,6 +21,7 @@ use luya\posts\models\{AutopostConfig,Autopost,AutopostQueueJob};
  * @property boolean $with_autopost
  * @property string $title
  * @property string $text
+ * @property string $author
  * @property integer $cat_id
  * @property string $image_id
  * @property string $image_list
@@ -39,7 +41,7 @@ use luya\posts\models\{AutopostConfig,Autopost,AutopostQueueJob};
 class Article extends NgRestModel
 {
     use SoftDeleteTrait, TaggableTrait;
-    
+
     public $i18n = ['title', 'text', 'teaser_text', 'image_list'];
 
     /**
@@ -67,7 +69,7 @@ class Article extends NgRestModel
         $this->update_user_id = Yii::$app->adminuser->getId();
         $this->timestamp_update = time();
     }
-    
+
     public function eventBeforeInsert($event)
     {
         $this->create_user_id = Yii::$app->adminuser->getId();
@@ -102,7 +104,7 @@ class Article extends NgRestModel
     {
         return [
             [['title', 'text'], 'required'],
-            [['title', 'text', 'image_list', 'file_list', 'teaser_text'], 'string'],
+            [['title', 'text', 'image_list', 'file_list', 'teaser_text', 'author'], 'string'],
             [['cat_id', 'create_user_id', 'update_user_id', 'timestamp_create', 'timestamp_update', 'timestamp_display_from', 'timestamp_display_until'], 'integer'],
             [['is_deleted', 'is_display_limit', 'with_autopost', 'is_draft'], 'boolean'],
             [['is_draft'], 'default', 'value' => true],
@@ -130,6 +132,7 @@ class Article extends NgRestModel
         return [
             'title' => Module::t('article_title'),
             'text' => Module::t('article_text'),
+            'author' => Module::t('Author'),
             'teaser_text' => Module::t('teaser_text'),
             'cat_id' => Module::t('article_cat_id'),
             'image_id' => Module::t('article_image_id'),
@@ -143,7 +146,7 @@ class Article extends NgRestModel
             'is_draft' => Module::t('article_is_draft'),
         ];
     }
-    
+
     /**
      * @inheritdoc
      */
@@ -155,6 +158,7 @@ class Article extends NgRestModel
             'text' => [
                 'class' => 'luya\posts\admin\plugins\WysiwygPlugin',
             ],
+            'author' => 'raw',
             'with_autopost' => [
                 'class' => 'luya\posts\admin\plugins\ToggleStatus',
                 'interactive' => false,
@@ -176,7 +180,7 @@ class Article extends NgRestModel
             'cat_id' => ['selectModel', 'modelClass' => Cat::className(), 'valueField' => 'id', 'labelField' => 'title']
         ];
     }
-    
+
     /**
      *
      * @return string
@@ -187,7 +191,7 @@ class Article extends NgRestModel
     }
 
     /**
-     * @return string 
+     * @return string
      */
     public function getDetailAbsoluteUrl()
     {
@@ -195,7 +199,7 @@ class Article extends NgRestModel
     }
 
     /**
-     * @return string 
+     * @return string
      */
     public function getDetailI18nAbsoluteUrl($lang = null)
     {
@@ -216,14 +220,14 @@ class Article extends NgRestModel
 
     /**
      * Get image object.
-     * 
+     *
      * @return \luya\admin\image\Item|boolean
      */
     public function getImage()
     {
-    	return Yii::$app->storage->getImage($this->image_id);
+        return Yii::$app->storage->getImage($this->image_id);
     }
-    
+
     /**
      * @inheritdoc
      */
@@ -231,18 +235,18 @@ class Article extends NgRestModel
     {
         return 'api-posts-article';
     }
-    
+
     /**
      * @inheritdoc
      */
     public function ngRestAttributeGroups()
     {
         return [
-            //[['timestamp_create', 'timestamp_display_from', 'is_display_limit', 'timestamp_display_until'], 'Time', 'collapsed'],
+            [['timestamp_create', 'timestamp_display_from', 'is_display_limit', 'timestamp_display_until'], 'Time', 'collapsed'],
             [['image_id', 'image_list', 'file_list'], 'Media'],
         ];
     }
-    
+
     /**
      * @inheritdoc
      */
@@ -250,7 +254,7 @@ class Article extends NgRestModel
     {
         return [
             [['list'], ['cat_id', 'title', 'is_draft', 'with_autopost', 'timestamp_create', 'image_id']],
-            [['create', 'update'], ['cat_id', 'title', 'teaser_text', 'with_autopost', 'is_draft', 'text', /*'timestamp_create', 'timestamp_display_from', 'is_display_limit', 'timestamp_display_until',*/ 'image_id', 'image_list', 'file_list']],
+            [['create', 'update'], ['cat_id', 'title', 'author', 'teaser_text', 'with_autopost', 'is_draft', 'text', 'timestamp_create', 'timestamp_display_from', 'is_display_limit', 'timestamp_display_until', 'image_id', 'image_list', 'file_list']],
             [['delete'], true],
         ];
     }
@@ -274,14 +278,14 @@ class Article extends NgRestModel
     public static function getAvailable($limit = false)
     {
         $q = self::find()
-           ->andWhere('is_draft = :is_draft', ['is_draft' => false])
-           ->andWhere('timestamp_display_from <= :time', ['time' => time()])
-           ->orderBy('timestamp_display_from DESC');
-        
+            ->andWhere('is_draft = :is_draft', ['is_draft' => false])
+            ->andWhere('timestamp_display_from <= :time', ['time' => time()])
+            ->orderBy('timestamp_display_from DESC');
+
         if ($limit) {
             $q->limit($limit);
         }
-        
+
         $articles = $q->all();
 
         // filter if display time is limited
@@ -309,7 +313,7 @@ class Article extends NgRestModel
     {
         return $this->hasMany(Autopost::class, ['article_id' => 'id']);
     }
-    
+
     /**
      * The cat name short getter.
      *
@@ -318,5 +322,51 @@ class Article extends NgRestModel
     public function getCategoryName()
     {
         return $this->cat->title;
+    }
+
+    public function getAuthor() {
+        $_default = [
+            'name' => 'Tommy Husky',
+            'bio' => "<p>I LOVE 😍 hamsters!! Always have loved and will always love them :)</p>",
+            'avatar' => 'https://huskyhamster.com/storage/tommy_df6c6970.jpg'
+        ];
+
+        $author = [];
+
+        try {
+            //$_a = Json::decode(Html::decode($this->author), true);
+            $_a = Json::decode($this->author, true);
+
+            if(is_array($_a)) {
+                if(!empty($_a['name'])) {
+                    $author['name'] = $_a['name'];
+                }
+                else {
+                    $author['name'] = $_default['name'];
+                }
+
+
+                if(!empty($_a['bio'])) {
+                    $author['bio'] = $_a['bio'];
+                }
+                else {
+                    $author['bio'] = $_default['bio'];
+                }
+
+                if(!empty($_a['avatar'])) {
+                    $author['avatar'] = $_a['avatar'];
+                }
+                else {
+                    $author['avatar'] = $_default['avatar'];
+                }
+            }
+            else {
+                $author = $_default;
+            }
+        } catch(Exception $e) {
+            $author = $_default;
+        }
+
+        return $author;
     }
 }

@@ -38,13 +38,26 @@ After installation via Composer include the module to your configuration file wi
     ],
     'postsadmin' => [
         'class' => 'luya\posts\admin\Module',
-        'vkAppId' => 1234, /* optional. Needed for Vkontakte autoposts */
-        'fbAppId' => 1234, /* optional. Needed for Facebook autoposts */
         'wysiwygOptions' => [ /* various tinymce editor options */
-            'height' => '480',
+            'height' => '800',
             'menubar' => false,
-            'plugins' => 'link image code lists textcolor',
-            'toolbar' => 'undo redo | bold underline italic forecolor backcolor image | alignleft aligncenter alignright alignjustify | numlist bullist outdent indent | removeformat | code'
+            'relative_urls' => false,
+            'remove_script_host' => false,
+            'convert_urls' => true,
+            'plugins' => 'link paste image imagetools code lists textcolor fullscreen wordcount table',
+            'toolbar' => 'undo redo | formatselect | bold underline italic forecolor backcolor image | alignleft aligncenter alignright alignjustify | numlist bullist outdent indent | link unlink | paste pastetext | removeformat | table | code wordcount | fullscreen',
+            'imagetools_cors_hosts' => [ 'huskyhamster.com' ],
+            'extended_valid_elements' => 'script[language|type|src]',
+//                'default_link_target' => '_blank',
+            'link_context_toolbar' => true,
+            'fullscreen_native' => true,
+            'rel_list' => [
+                ['title' => 'Internal', 'value' => 'internal'],
+                ['title' => 'Internal CTA', 'value' => 'internal-cta'],
+                ['title' => 'Full External', 'value' => 'noopener nofollow noreferrer'],
+                ['title' => 'Nofollow', 'value' => 'nofollow'],
+              ],
+            'paste_word_valid_elements' => 'p,b,strong,i,em,h1,h2,h3,h4,h5,h6,a,ul,li,ol,blockquote,cite,table,tr,td,th,tbody,thead',
         ],
     ],
 ]

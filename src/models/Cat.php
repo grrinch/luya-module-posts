@@ -16,7 +16,7 @@ class Cat extends NgRestModel
      * @inheritdoc
      */
     public $i18n = ['title'];
-    
+
     /**
      * @inheritdoc
      */
@@ -32,7 +32,7 @@ class Cat extends NgRestModel
         parent::init();
         $this->on(self::EVENT_BEFORE_DELETE, [$this, 'eventBeforeDelete']);
     }
-    
+
     /**
      * @inheritdoc
      */
@@ -43,7 +43,7 @@ class Cat extends NgRestModel
             $event->isValid = false;
         }
     }
-    
+
     /**
      * @inheritdoc
      */
@@ -92,7 +92,7 @@ class Cat extends NgRestModel
             [['delete'], true],
         ];
     }
-    
+
     /**
      * Get articles for this category.
      */
@@ -101,10 +101,25 @@ class Cat extends NgRestModel
         return $this->hasMany(Article::class, ['cat_id' => 'id']);
     }
 
+    public function getAvailableArticles($limit = false) {
+        $q = Article::find()
+            ->where('cat_id = :cat_id', ['cat_id' => $this->id])
+            ->andWhere('is_draft = :is_draft', ['is_draft' => false])
+            ->andWhere('is_deleted = :is_deleted', ['is_deleted' => false])
+            ->andWhere('timestamp_display_from <= :time', ['time' => time()])
+            ->orderBy('timestamp_display_from DESC');
+
+        if ($limit) {
+            $q->limit($limit);
+        }
+
+        return $q;
+    }
+
     public function ngRestRelations()
     {
         return [
-           ['label' => 'Articles', 'apiEndpoint' => Article::ngRestApiEndpoint(), 'dataProvider' => $this->getArticles()],
+            ['label' => 'Articles', 'apiEndpoint' => Article::ngRestApiEndpoint(), 'dataProvider' => $this->getArticles()],
         ];
     }
 }

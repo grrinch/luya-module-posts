@@ -19,25 +19,25 @@ final class Module extends \luya\base\Module
      *
      * In order to read more about activeDataProvider defaultOrder: http://www.yiiframework.com/doc-2.0/yii-data-sort.html#$defaultOrder-detail
      */
-    public $articleDefaultOrder = ['timestamp_create' => SORT_DESC];
-    
+    public $articleDefaultOrder = ['timestamp_display_from' => SORT_DESC];
+
     /**
      * @var integer Default number of pages.
      */
-    public $articleDefaultPageSize = 10;
-    
+    public $articleDefaultPageSize = 15;
+
     /**
      * @var array The default order for the category article list in the category action for the posts.
      *
      * In order to read more about activeDataProvider defaultOrder: http://www.yiiframework.com/doc-2.0/yii-data-sort.html#$defaultOrder-detail
      */
-    public $categoryArticleDefaultOrder = ['timestamp_create' => SORT_DESC];
-    
+    public $categoryArticleDefaultOrder = ['timestamp_display_from' => SORT_DESC];
+
     /**
      * @var integer Default number of pages.
      */
-    public $categoryArticleDefaultPageSize = 10;
-    
+    public $categoryArticleDefaultPageSize = 15;
+
     /**
      * @var array
      */

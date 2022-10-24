@@ -10,6 +10,7 @@ class m150204_144806_news_article extends Migration
             'id' => $this->primaryKey(),
             'title' => $this->text(),
             'text' => $this->text(),
+            'author' => $this->text(),
             'cat_id' => $this->integer(11)->defaultValue(0),
             'image_id' => $this->integer(11)->defaultValue(0),
             'image_list' => $this->text(),
